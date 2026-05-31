@@ -2,6 +2,7 @@ export type IssueKind = "issue" | "pull_request";
 export type IssueState = "open" | "closed";
 export type Sentiment = "blocked" | "negative" | "neutral" | "positive";
 export type Priority = "Critical" | "High" | "Medium" | "Low";
+export type SourceKey = "github" | "community" | "docs";
 
 export interface GitHubIssue {
   id: number;
@@ -59,6 +60,7 @@ export interface MaintainerBrief {
 }
 
 export interface ConnectedSource {
+  id: SourceKey;
   name: string;
   connector: string;
   status: string;
@@ -97,5 +99,10 @@ export interface AnalysisResult {
     issues: number;
     communityMessages: number;
     docs: number;
+  };
+  sourceData: {
+    issues: GitHubIssue[];
+    communityMessages: CommunityMessage[];
+    docs: DocSection[];
   };
 }

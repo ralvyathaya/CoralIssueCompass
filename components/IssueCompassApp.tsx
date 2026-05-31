@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { AnalysisResult, RankedIssue } from "@/lib/types";
 
@@ -9,13 +10,21 @@ interface IssueCompassAppProps {
   analysis: AnalysisResult;
 }
 
+interface RepoTarget {
+  owner: string;
+  name: string;
+  url: string;
+}
+
 interface ResultsProps extends IssueCompassAppProps {
   sectionRef: RefObject<HTMLDivElement>;
+  targetRepo: RepoTarget;
   onBackToTop: () => void;
   onToggleResults: () => void;
 }
 
 export function IssueCompassApp({ analysis }: IssueCompassAppProps) {
+  const [repoUrl, setRepoUrl] = useState(analysis.repo.url);
   const [question, setQuestion] = useState(
     "What should I work on today as an open-source maintainer?",
   );
@@ -23,6 +32,7 @@ export function IssueCompassApp({ analysis }: IssueCompassAppProps) {
   const [showResults, setShowResults] = useState(false);
   const [scrollRequest, setScrollRequest] = useState(0);
   const resultsRef = useRef<HTMLDivElement>(null);
+  const targetRepo = parseGitHubRepo(repoUrl) ?? analysis.repo;
 
   useEffect(() => {
     if (!hasAnalyzed || !showResults) return;
@@ -87,18 +97,39 @@ export function IssueCompassApp({ analysis }: IssueCompassAppProps) {
               analyzeRepo();
             }}
           >
-            <label className="ask-label" htmlFor="maintainer-question">
-              Maintainer question
-            </label>
-            <Textarea
-              id="maintainer-question"
-              aria-label="Maintainer question"
-              value={question}
-              onChange={(event) => setQuestion(event.target.value)}
-            />
+            <div className="form-field">
+              <label className="ask-label" htmlFor="repo-url">
+                Repository URL
+              </label>
+              <Input
+                id="repo-url"
+                aria-label="Repository URL"
+                placeholder="https://github.com/coral-hackathon/issuecompass-demo"
+                type="url"
+                value={repoUrl}
+                onChange={(event) => setRepoUrl(event.target.value)}
+              />
+              <p className="field-hint">
+                Demo data is fixture-backed for reliability; this sets the repo
+                target shown in the brief. Live Coral connectors can replace it.
+              </p>
+            </div>
+
+            <div className="form-field">
+              <label className="ask-label" htmlFor="maintainer-question">
+                Question optional
+              </label>
+              <Textarea
+                id="maintainer-question"
+                aria-label="Maintainer question"
+                value={question}
+                onChange={(event) => setQuestion(event.target.value)}
+              />
+            </div>
+
             <div className="ask-actions">
               <span className="secondary-note">
-                Demo repo: {analysis.repo.owner}/{analysis.repo.name}
+                Target repo: {targetRepo.owner}/{targetRepo.name}
               </span>
               <div className="ask-buttons">
                 {hasAnalyzed ? (
@@ -138,6 +169,7 @@ export function IssueCompassApp({ analysis }: IssueCompassAppProps) {
         <Results
           analysis={analysis}
           sectionRef={resultsRef}
+          targetRepo={targetRepo}
           onBackToTop={scrollToQuestion}
           onToggleResults={toggleLatestAnalysis}
         />
@@ -160,12 +192,32 @@ function EmptyState() {
   return (
     <section className="panel empty-state">
       <strong>Ready.</strong>
-      <span>Click “Analyze Repo” to generate today’s maintainer brief.</span>
+      <span>Enter a GitHub repo URL, then analyze the maintainer queue.</span>
     </section>
   );
 }
 
-function Results({ analysis, sectionRef }: ResultsProps) {
+function CollapsedResult({ onShow }: { onShow: () => void }) {
+  return (
+    <section className="panel collapsed-result">
+      <div>
+        <strong>Analysis ready.</strong>
+        <span> The latest maintainer brief is hidden.</span>
+      </div>
+      <Button type="button" variant="outline" onClick={onShow}>
+        View analysis ↓
+      </Button>
+    </section>
+  );
+}
+
+function Results({
+  analysis,
+  sectionRef,
+  targetRepo,
+  onBackToTop,
+  onToggleResults,
+}: ResultsProps) {
   return (
     <div className="analysis-section" id="results" ref={sectionRef}>
       <section
@@ -176,14 +228,24 @@ function Results({ analysis, sectionRef }: ResultsProps) {
           <p className="section-kicker">Analysis result</p>
           <h2>Today’s maintainer plan</h2>
           <p>
-            Ranked from GitHub activity, community signals, docs freshness, and
-            Coral SQL joins.
+            Ranked for {targetRepo.owner}/{targetRepo.name} from GitHub
+            activity, community signals, docs freshness, and Coral SQL joins.
           </p>
         </div>
-        <div className="analysis-badges" aria-label="Analysis metadata">
-          <span>{analysis.brief.rankedIssues.length} priorities</span>
-          <span>{analysis.rawCounts.communityMessages} messages joined</span>
-          <span>{analysis.cache.status}</span>
+        <div className="analysis-controls">
+          <div className="analysis-badges" aria-label="Analysis metadata">
+            <span>{analysis.brief.rankedIssues.length} priorities</span>
+            <span>{analysis.rawCounts.communityMessages} messages joined</span>
+            <span>{analysis.cache.status}</span>
+          </div>
+          <div className="analysis-actions">
+            <Button type="button" variant="outline" onClick={onBackToTop}>
+              ↑ Analyze another repo
+            </Button>
+            <Button type="button" variant="secondary" onClick={onToggleResults}>
+              Hide results
+            </Button>
+          </div>
         </div>
       </section>
 
@@ -368,4 +430,43 @@ function formatDate(value: string) {
     day: "numeric",
     year: "numeric",
   }).format(new Date(value));
+}
+
+function getScrollBehavior(): ScrollBehavior {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    return "auto";
+  }
+
+  return "smooth";
+}
+
+function parseGitHubRepo(value: string): RepoTarget | null {
+  const trimmed = value.trim().replace(/\.git$/, "");
+  if (!trimmed) return null;
+
+  try {
+    const url = trimmed.startsWith("http")
+      ? new URL(trimmed)
+      : new URL(`https://${trimmed}`);
+
+    if (!url.hostname.includes("github.com")) return null;
+
+    const [owner, name] = url.pathname.replace(/^\/+/, "").split("/");
+    if (!owner || !name) return null;
+
+    return {
+      owner,
+      name,
+      url: `https://github.com/${owner}/${name}`,
+    };
+  } catch {
+    const [owner, name] = trimmed.replace(/^github\.com\//, "").split("/");
+    if (!owner || !name) return null;
+
+    return {
+      owner,
+      name,
+      url: `https://github.com/${owner}/${name}`,
+    };
+  }
 }

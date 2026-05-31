@@ -205,10 +205,22 @@ h3 {
     border-radius: calc(var(--radius) + 2px);
 }
 
+.form-field {
+    display: grid;
+    gap: 7px;
+}
+
 .ask-label {
     color: #dcefe1;
     font-size: 0.84rem;
     font-weight: 600;
+}
+
+.field-hint {
+    margin: -1px 0 0;
+    color: var(--muted-foreground);
+    font-size: 0.78rem;
+    line-height: 1.45;
 }
 
 .ask-actions {
@@ -217,6 +229,13 @@ h3 {
     gap: 10px;
     align-items: center;
     justify-content: space-between;
+}
+
+.ask-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
 }
 
 .secondary-note {
@@ -343,6 +362,12 @@ h3 {
     font-weight: 650;
 }
 
+.analysis-controls {
+    display: grid;
+    justify-items: end;
+    gap: 10px;
+}
+
 .analysis-badges {
     display: flex;
     flex-wrap: wrap;
@@ -361,6 +386,13 @@ h3 {
     color: #c7f9d8;
     font-size: 0.78rem;
     font-weight: 600;
+}
+
+.analysis-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
 }
 
 .results {
@@ -600,16 +632,19 @@ pre {
     line-height: 1.55;
 }
 
-.empty-state {
+.empty-state,
+.collapsed-result {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 10px;
     align-items: center;
+    justify-content: space-between;
     padding: 13px 15px;
     color: var(--muted-foreground);
 }
 
-.empty-state strong {
+.empty-state strong,
+.collapsed-result strong {
     color: var(--foreground);
 }
 
@@ -636,6 +671,7 @@ pre {
 }
 
 .ui-button:focus-visible,
+.ui-input:focus-visible,
 .ui-textarea:focus-visible {
     outline: none;
     box-shadow:
@@ -644,6 +680,7 @@ pre {
 }
 
 .ui-button:disabled,
+.ui-input:disabled,
 .ui-textarea:disabled {
     cursor: not-allowed;
     opacity: 0.55;
@@ -681,6 +718,28 @@ pre {
     height: 34px;
     padding: 0 12px;
     font-size: 0.84rem;
+}
+
+.ui-input {
+    height: 40px;
+    width: 100%;
+    border: 1px solid var(--input);
+    border-radius: 8px;
+    background: #0a100d;
+    padding: 0 12px;
+    color: var(--foreground);
+    font-size: 0.95rem;
+    transition:
+        border-color 120ms ease,
+        box-shadow 120ms ease;
+}
+
+.ui-input::placeholder {
+    color: var(--muted-foreground);
+}
+
+.ui-input:hover {
+    border-color: #3a4b3f;
 }
 
 .ui-textarea {
@@ -744,7 +803,12 @@ pre {
         flex-direction: column;
     }
 
-    .analysis-badges {
+    .analysis-controls {
+        justify-items: start;
+    }
+
+    .analysis-badges,
+    .analysis-actions {
         justify-content: flex-start;
     }
 
