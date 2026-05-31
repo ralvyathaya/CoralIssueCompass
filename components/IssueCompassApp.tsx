@@ -11,6 +11,8 @@ interface IssueCompassAppProps {
 
 interface ResultsProps extends IssueCompassAppProps {
   sectionRef: RefObject<HTMLDivElement>;
+  onBackToTop: () => void;
+  onToggleResults: () => void;
 }
 
 export function IssueCompassApp({ analysis }: IssueCompassAppProps) {
@@ -18,24 +20,46 @@ export function IssueCompassApp({ analysis }: IssueCompassAppProps) {
     "What should I work on today as an open-source maintainer?",
   );
   const [hasAnalyzed, setHasAnalyzed] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const [scrollRequest, setScrollRequest] = useState(0);
   const resultsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!hasAnalyzed) return;
+    if (!hasAnalyzed || !showResults) return;
 
     const frame = requestAnimationFrame(() => {
-      const prefersReducedMotion = window.matchMedia(
-        "(prefers-reduced-motion: reduce)",
-      ).matches;
-
       resultsRef.current?.scrollIntoView({
-        behavior: prefersReducedMotion ? "auto" : "smooth",
+        behavior: getScrollBehavior(),
         block: "start",
       });
     });
 
     return () => cancelAnimationFrame(frame);
-  }, [hasAnalyzed]);
+  }, [hasAnalyzed, showResults, scrollRequest]);
+
+  function analyzeRepo() {
+    setHasAnalyzed(true);
+    setShowResults(true);
+    setScrollRequest((request) => request + 1);
+  }
+
+  function viewLatestAnalysis() {
+    setShowResults(true);
+    setScrollRequest((request) => request + 1);
+  }
+
+  function toggleLatestAnalysis() {
+    if (showResults) {
+      setShowResults(false);
+      return;
+    }
+
+    viewLatestAnalysis();
+  }
+
+  function scrollToQuestion() {
+    window.scrollTo({ top: 0, behavior: getScrollBehavior() });
+  }
 
   return (
     <main className="page-shell">
@@ -60,7 +84,7 @@ export function IssueCompassApp({ analysis }: IssueCompassAppProps) {
             className="ask-box"
             onSubmit={(event) => {
               event.preventDefault();
-              setHasAnalyzed(true);
+              analyzeRepo();
             }}
           >
             <label className="ask-label" htmlFor="maintainer-question">
@@ -76,7 +100,18 @@ export function IssueCompassApp({ analysis }: IssueCompassAppProps) {
               <span className="secondary-note">
                 Demo repo: {analysis.repo.owner}/{analysis.repo.name}
               </span>
-              <Button type="submit">Analyze Repo →</Button>
+              <div className="ask-buttons">
+                {hasAnalyzed ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={toggleLatestAnalysis}
+                  >
+                    {showResults ? "Hide analysis" : "View analysis ↓"}
+                  </Button>
+                ) : null}
+                <Button type="submit">Analyze Repo →</Button>
+              </div>
             </div>
           </form>
         </div>
@@ -99,8 +134,15 @@ export function IssueCompassApp({ analysis }: IssueCompassAppProps) {
         </aside>
       </section>
 
-      {hasAnalyzed ? (
-        <Results analysis={analysis} sectionRef={resultsRef} />
+      {hasAnalyzed && showResults ? (
+        <Results
+          analysis={analysis}
+          sectionRef={resultsRef}
+          onBackToTop={scrollToQuestion}
+          onToggleResults={toggleLatestAnalysis}
+        />
+      ) : hasAnalyzed ? (
+        <CollapsedResult onShow={viewLatestAnalysis} />
       ) : (
         <EmptyState />
       )}
