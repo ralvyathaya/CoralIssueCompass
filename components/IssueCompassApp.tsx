@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, type RefObject } from "react";
+import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import type { AnalysisResult, RankedIssue } from "@/lib/types";
+import { generateMaintainerBrief } from "@/lib/ai";
+import { rankIssues } from "@/lib/scoring";
+import type { AnalysisResult, RankedIssue, SourceKey } from "@/lib/types";
 
 interface IssueCompassAppProps {
   analysis: AnalysisResult;
@@ -16,9 +18,12 @@ interface RepoTarget {
   url: string;
 }
 
+type SourceToggleState = Record<SourceKey, boolean>;
+
 interface ResultsProps extends IssueCompassAppProps {
   sectionRef: RefObject<HTMLDivElement>;
   targetRepo: RepoTarget;
+  question: string;
   onBackToTop: () => void;
   onToggleResults: () => void;
 }
@@ -31,8 +36,17 @@ export function IssueCompassApp({ analysis }: IssueCompassAppProps) {
   const [hasAnalyzed, setHasAnalyzed] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [scrollRequest, setScrollRequest] = useState(0);
+  const [enabledSources, setEnabledSources] = useState<SourceToggleState>({
+    github: true,
+    community: true,
+    docs: true,
+  });
   const resultsRef = useRef<HTMLDivElement>(null);
   const targetRepo = parseGitHubRepo(repoUrl) ?? analysis.repo;
+  const activeAnalysis = useMemo(
+    () => buildAnalysisFromSources(analysis, enabledSources),
+    [analysis, enabledSources],
+  );
 
   useEffect(() => {
     if (!hasAnalyzed || !showResults) return;
@@ -69,6 +83,13 @@ export function IssueCompassApp({ analysis }: IssueCompassAppProps) {
 
   function scrollToQuestion() {
     window.scrollTo({ top: 0, behavior: getScrollBehavior() });
+  }
+
+  function toggleSource(source: SourceKey) {
+    setEnabledSources((current) => ({
+      ...current,
+      [source]: !current[source],
+    }));
   }
 
   return (
@@ -150,16 +171,35 @@ export function IssueCompassApp({ analysis }: IssueCompassAppProps) {
         <aside className="side-stack" aria-label="Connected source overview">
           <section className="panel">
             <h2>Connected sources</h2>
+            <p className="panel-caption">
+              Toggle sources to see the Coral join signals change the ranking.
+            </p>
             <ul className="source-list">
-              {analysis.sources.map((source) => (
-                <li className="source-item" key={source.name}>
-                  <strong>{source.name}</strong>
-                  <span>{source.connector}</span>
-                  <span className="status-pill">
-                    {source.records} records · {source.status}
-                  </span>
-                </li>
-              ))}
+              {analysis.sources.map((source) => {
+                const isEnabled = enabledSources[source.id];
+
+                return (
+                  <li className="source-item" key={source.name}>
+                    <button
+                      className="source-toggle"
+                      type="button"
+                      aria-pressed={isEnabled}
+                      onClick={() => toggleSource(source.id)}
+                    >
+                      <span className="source-row">
+                        <strong>{source.name}</strong>
+                        <span className="source-state">
+                          {isEnabled ? "Included" : "Excluded"}
+                        </span>
+                      </span>
+                      <span>{source.connector}</span>
+                      <span className="status-pill">
+                        {source.records} records · {source.status}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           </section>
         </aside>
@@ -167,9 +207,10 @@ export function IssueCompassApp({ analysis }: IssueCompassAppProps) {
 
       {hasAnalyzed && showResults ? (
         <Results
-          analysis={analysis}
+          analysis={activeAnalysis}
           sectionRef={resultsRef}
           targetRepo={targetRepo}
+          question={question}
           onBackToTop={scrollToQuestion}
           onToggleResults={toggleLatestAnalysis}
         />
@@ -215,6 +256,7 @@ function Results({
   analysis,
   sectionRef,
   targetRepo,
+  question,
   onBackToTop,
   onToggleResults,
 }: ResultsProps) {
@@ -228,8 +270,8 @@ function Results({
           <p className="section-kicker">Analysis result</p>
           <h2>Today’s maintainer plan</h2>
           <p>
-            Ranked for {targetRepo.owner}/{targetRepo.name} from GitHub
-            activity, community signals, docs freshness, and Coral SQL joins.
+            Answering “{question}” for {targetRepo.owner}/{targetRepo.name}
+            using the currently included Coral sources.
           </p>
         </div>
         <div className="analysis-controls">
@@ -430,6 +472,39 @@ function formatDate(value: string) {
     day: "numeric",
     year: "numeric",
   }).format(new Date(value));
+}
+
+function buildAnalysisFromSources(
+  analysis: AnalysisResult,
+  enabledSources: SourceToggleState,
+): AnalysisResult {
+  const issues = enabledSources.github ? analysis.sourceData.issues : [];
+  const communityMessages = enabledSources.community
+    ? analysis.sourceData.communityMessages
+    : [];
+  const docs = enabledSources.docs ? analysis.sourceData.docs : [];
+  const rankedIssues = rankIssues(issues, communityMessages, docs);
+
+  return {
+    ...analysis,
+    learnedSchemas: analysis.learnedSchemas.filter((schema) => {
+      if (schema.source.startsWith("github")) return enabledSources.github;
+      if (schema.source.startsWith("csv")) return enabledSources.community;
+      if (schema.source.startsWith("docs")) return enabledSources.docs;
+      return true;
+    }),
+    brief: generateMaintainerBrief(rankedIssues),
+    rawCounts: {
+      issues: issues.length,
+      communityMessages: communityMessages.length,
+      docs: docs.length,
+    },
+    sourceData: {
+      issues,
+      communityMessages,
+      docs,
+    },
+  };
 }
 
 function getScrollBehavior(): ScrollBehavior {
