@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import type { AnalysisResult, RankedIssue } from "@/lib/types";
 
 interface IssueCompassAppProps {
@@ -15,6 +17,14 @@ export function IssueCompassApp({ analysis }: IssueCompassAppProps) {
 
   return (
     <main className="page-shell">
+      <header className="topbar">
+        <div className="brand-lockup">
+          <span className="brand-mark">IC</span>
+          <span>IssueCompass</span>
+        </div>
+        <span className="topbar-meta">Coral SQL maintainer triage</span>
+      </header>
+
       <section className="hero">
         <div className="hero-card">
           <p className="eyebrow">IssueCompass × Coral SQL</p>
@@ -31,7 +41,11 @@ export function IssueCompassApp({ analysis }: IssueCompassAppProps) {
               setHasAnalyzed(true);
             }}
           >
-            <textarea
+            <label className="ask-label" htmlFor="maintainer-question">
+              Maintainer question
+            </label>
+            <Textarea
+              id="maintainer-question"
               aria-label="Maintainer question"
               value={question}
               onChange={(event) => setQuestion(event.target.value)}
@@ -40,9 +54,7 @@ export function IssueCompassApp({ analysis }: IssueCompassAppProps) {
               <span className="secondary-note">
                 Demo repo: {analysis.repo.owner}/{analysis.repo.name}
               </span>
-              <button className="primary-button" type="submit">
-                Analyze Repo →
-              </button>
+              <Button type="submit">Analyze Repo →</Button>
             </div>
           </form>
         </div>
@@ -89,7 +101,7 @@ function Results({ analysis }: IssueCompassAppProps) {
   return (
     <section className="results" id="results">
       <aside className="panel summary-card">
-        <p className="eyebrow">AI maintainer brief</p>
+        <p className="eyebrow">Maintainer brief</p>
         <h2>What should I work on today?</h2>
         <p>{analysis.brief.summary}</p>
 
