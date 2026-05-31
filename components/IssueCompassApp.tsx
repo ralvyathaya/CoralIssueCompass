@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { AnalysisResult, RankedIssue } from "@/lib/types";
@@ -9,11 +9,33 @@ interface IssueCompassAppProps {
   analysis: AnalysisResult;
 }
 
+interface ResultsProps extends IssueCompassAppProps {
+  sectionRef: RefObject<HTMLDivElement>;
+}
+
 export function IssueCompassApp({ analysis }: IssueCompassAppProps) {
   const [question, setQuestion] = useState(
     "What should I work on today as an open-source maintainer?",
   );
   const [hasAnalyzed, setHasAnalyzed] = useState(false);
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!hasAnalyzed) return;
+
+    const frame = requestAnimationFrame(() => {
+      const prefersReducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+
+      resultsRef.current?.scrollIntoView({
+        behavior: prefersReducedMotion ? "auto" : "smooth",
+        block: "start",
+      });
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [hasAnalyzed]);
 
   return (
     <main className="page-shell">
@@ -77,7 +99,11 @@ export function IssueCompassApp({ analysis }: IssueCompassAppProps) {
         </aside>
       </section>
 
-      {hasAnalyzed ? <Results analysis={analysis} /> : <EmptyState />}
+      {hasAnalyzed ? (
+        <Results analysis={analysis} sectionRef={resultsRef} />
+      ) : (
+        <EmptyState />
+      )}
 
       <p className="footer-note">
         Built for the WeMakeDevs × Coral hackathon. The adapter in{" "}
@@ -97,67 +123,100 @@ function EmptyState() {
   );
 }
 
-function Results({ analysis }: IssueCompassAppProps) {
+function Results({ analysis, sectionRef }: ResultsProps) {
   return (
-    <section className="results" id="results">
-      <aside className="panel summary-card">
-        <p className="eyebrow">Maintainer brief</p>
-        <h2>What should I work on today?</h2>
-        <p>{analysis.brief.summary}</p>
-
-        <div className="recommendation">
-          <strong>Recommended focus</strong>
-          {analysis.brief.recommendedFocus}
+    <div className="analysis-section" id="results" ref={sectionRef}>
+      <section
+        className="analysis-divider"
+        aria-label="Analysis result summary"
+      >
+        <div>
+          <p className="section-kicker">Analysis result</p>
+          <h2>Today’s maintainer plan</h2>
+          <p>
+            Ranked from GitHub activity, community signals, docs freshness, and
+            Coral SQL joins.
+          </p>
         </div>
+        <div className="analysis-badges" aria-label="Analysis metadata">
+          <span>{analysis.brief.rankedIssues.length} priorities</span>
+          <span>{analysis.rawCounts.communityMessages} messages joined</span>
+          <span>{analysis.cache.status}</span>
+        </div>
+      </section>
 
-        <h3>Why Coral matters</h3>
-        <ul className="reason-list">
-          {analysis.brief.reasoning.map((reason) => (
-            <li key={reason}>{reason}</li>
-          ))}
-        </ul>
+      <section className="results" aria-label="Analysis results">
+        <aside
+          className="results-column results-sidebar"
+          aria-label="Maintainer brief"
+        >
+          <div className="panel summary-card">
+            <p className="eyebrow">Maintainer brief</p>
+            <h2>What should I work on today?</h2>
+            <p>{analysis.brief.summary}</p>
 
-        <h3>Learned schemas</h3>
-        <ul className="schema-list">
-          {analysis.learnedSchemas.map((schema) => (
-            <li className="schema-item" key={schema.source}>
-              <strong>{schema.source}</strong>
-              <span>Join key: {schema.joinKey}</span>
-              <span>{schema.learnedColumns.join(", ")}</span>
-            </li>
-          ))}
-        </ul>
-      </aside>
+            <div className="recommendation">
+              <strong>Recommended focus</strong>
+              {analysis.brief.recommendedFocus}
+            </div>
 
-      <div>
-        <ol className="issue-list">
-          {analysis.brief.rankedIssues.map((ranked, index) => (
-            <IssueCard key={ranked.issue.id} ranked={ranked} rank={index + 1} />
-          ))}
-        </ol>
+            <h3>Why Coral matters</h3>
+            <ul className="reason-list">
+              {analysis.brief.reasoning.map((reason) => (
+                <li key={reason}>{reason}</li>
+              ))}
+            </ul>
 
-        <details className="query-card" open>
-          <summary>SQL used by Coral: priority_issues.sql</summary>
-          <pre>
-            <code>{analysis.sql.priorityIssues}</code>
-          </pre>
-        </details>
+            <h3>Learned schemas</h3>
+            <ul className="schema-list">
+              {analysis.learnedSchemas.map((schema) => (
+                <li className="schema-item" key={schema.source}>
+                  <strong>{schema.source}</strong>
+                  <span>Join key: {schema.joinKey}</span>
+                  <span>{schema.learnedColumns.join(", ")}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </aside>
 
-        <details className="query-card">
-          <summary>Additional Coral SQL: duplicate_issues.sql</summary>
-          <pre>
-            <code>{analysis.sql.duplicateIssues}</code>
-          </pre>
-        </details>
+        <div
+          className="results-column results-main"
+          aria-label="Ranked issues and Coral SQL"
+        >
+          <ol className="issue-list">
+            {analysis.brief.rankedIssues.map((ranked, index) => (
+              <IssueCard
+                key={ranked.issue.id}
+                ranked={ranked}
+                rank={index + 1}
+              />
+            ))}
+          </ol>
 
-        <details className="query-card">
-          <summary>Additional Coral SQL: release_notes.sql</summary>
-          <pre>
-            <code>{analysis.sql.releaseNotes}</code>
-          </pre>
-        </details>
-      </div>
-    </section>
+          <details className="query-card" open>
+            <summary>SQL used by Coral: priority_issues.sql</summary>
+            <pre>
+              <code>{analysis.sql.priorityIssues}</code>
+            </pre>
+          </details>
+
+          <details className="query-card">
+            <summary>Additional Coral SQL: duplicate_issues.sql</summary>
+            <pre>
+              <code>{analysis.sql.duplicateIssues}</code>
+            </pre>
+          </details>
+
+          <details className="query-card">
+            <summary>Additional Coral SQL: release_notes.sql</summary>
+            <pre>
+              <code>{analysis.sql.releaseNotes}</code>
+            </pre>
+          </details>
+        </div>
+      </section>
+    </div>
   );
 }
 
