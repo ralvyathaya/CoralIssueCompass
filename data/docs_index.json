@@ -1,0 +1,47 @@
+[
+  {
+    "id": "docs-auth-callback",
+    "title": "OAuth callback configuration",
+    "path": "docs/auth/oauth-callback.md",
+    "summary": "Explains redirect URL setup and the auth callback lifecycle.",
+    "updatedAt": "2026-04-14T10:00:00.000Z",
+    "relatedIssueNumbers": [128],
+    "stale": true
+  },
+  {
+    "id": "docs-docker-quickstart",
+    "title": "Docker quickstart",
+    "path": "docs/getting-started/docker.md",
+    "summary": "Local Docker setup, environment variables, and first-run troubleshooting.",
+    "updatedAt": "2026-03-28T09:00:00.000Z",
+    "relatedIssueNumbers": [119],
+    "stale": true
+  },
+  {
+    "id": "docs-indexing",
+    "title": "Repository indexing architecture",
+    "path": "docs/architecture/indexing.md",
+    "summary": "Describes file scanning, caching, and incremental index design notes.",
+    "updatedAt": "2026-05-22T09:30:00.000Z",
+    "relatedIssueNumbers": [135],
+    "stale": false
+  },
+  {
+    "id": "docs-windows-dev",
+    "title": "Windows local development",
+    "path": "docs/contributing/windows.md",
+    "summary": "Windows setup notes for file watching, path separators, and shell differences.",
+    "updatedAt": "2026-05-26T15:15:00.000Z",
+    "relatedIssueNumbers": [130],
+    "stale": false
+  },
+  {
+    "id": "docs-release-ci",
+    "title": "Release and CI troubleshooting",
+    "path": "docs/maintainers/release-ci.md",
+    "summary": "Maintainer guide for CI runners, release checks, and flaky test triage.",
+    "updatedAt": "2026-05-19T08:10:00.000Z",
+    "relatedIssueNumbers": [124],
+    "stale": false
+  }
+]

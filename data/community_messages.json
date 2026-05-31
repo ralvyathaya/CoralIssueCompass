@@ -1,0 +1,92 @@
+[
+  {
+    "id": "msg-001",
+    "source": "Discord",
+    "author": "nora",
+    "text": "Three users in #help hit the OAuth redirect crash. Looks like #128 and it blocks onboarding completely.",
+    "createdAt": "2026-05-31T06:55:00.000Z",
+    "issueNumbers": [128],
+    "sentiment": "blocked"
+  },
+  {
+    "id": "msg-002",
+    "source": "GitHub Discussions",
+    "author": "leo",
+    "text": "Can someone confirm if the auth callback bug is known? We cannot demo the app to our team.",
+    "createdAt": "2026-05-30T22:18:00.000Z",
+    "issueNumbers": [128],
+    "sentiment": "negative"
+  },
+  {
+    "id": "msg-003",
+    "source": "Slack",
+    "author": "irene",
+    "text": "npm audit is failing our deploy because of the token parser alert. Tracking #142.",
+    "createdAt": "2026-05-31T08:04:00.000Z",
+    "issueNumbers": [142],
+    "sentiment": "blocked"
+  },
+  {
+    "id": "msg-004",
+    "source": "Forum",
+    "author": "marco",
+    "text": "The Docker quickstart env var is outdated. I lost 30 minutes before finding issue #119.",
+    "createdAt": "2026-05-30T15:22:00.000Z",
+    "issueNumbers": [119],
+    "sentiment": "negative"
+  },
+  {
+    "id": "msg-005",
+    "source": "Discord",
+    "author": "rhea",
+    "text": "Quickstart docs still mention ISSUECOMPASS_API_TOKEN. Should be ISSUECOMPASS_GITHUB_TOKEN. Same as #119.",
+    "createdAt": "2026-05-29T12:02:00.000Z",
+    "issueNumbers": [119],
+    "sentiment": "negative"
+  },
+  {
+    "id": "msg-006",
+    "source": "GitHub Discussions",
+    "author": "timo",
+    "text": "Large monorepo indexing took 7 minutes. Incremental scans from #135 would make this usable for us.",
+    "createdAt": "2026-05-31T01:44:00.000Z",
+    "issueNumbers": [135],
+    "sentiment": "negative"
+  },
+  {
+    "id": "msg-007",
+    "source": "Discord",
+    "author": "bruna",
+    "text": "Another +1 for #135. We have 40k files and maintainers avoid running full indexing now.",
+    "createdAt": "2026-05-30T18:11:00.000Z",
+    "issueNumbers": [135],
+    "sentiment": "negative"
+  },
+  {
+    "id": "msg-008",
+    "source": "Slack",
+    "author": "devon",
+    "text": "The Windows watcher PR #130 fixes our local dev loop. It just needs a maintainer review.",
+    "createdAt": "2026-05-31T03:58:00.000Z",
+    "issueNumbers": [130],
+    "sentiment": "positive"
+  },
+  {
+    "id": "msg-009",
+    "source": "Forum",
+    "author": "akari",
+    "text": "CI failed on Node 20 again. Is #124 being tracked anywhere?",
+    "createdAt": "2026-05-30T20:41:00.000Z",
+    "issueNumbers": [124],
+    "sentiment": "neutral"
+  },
+  {
+    "id": "msg-010",
+    "source": "Discord",
+    "author": "nora",
+    "text": "Can the auth docs explain callback URL migration? That would reduce repeats around #128.",
+    "createdAt": "2026-05-31T07:35:00.000Z",
+    "issueNumbers": [128],
+    "sentiment": "negative"
+  }
+]
