@@ -8,7 +8,9 @@ interface IssueCompassAppProps {
 }
 
 export function IssueCompassApp({ analysis }: IssueCompassAppProps) {
-  const [question, setQuestion] = useState("What should I work on today as an open-source maintainer?");
+  const [question, setQuestion] = useState(
+    "What should I work on today as an open-source maintainer?",
+  );
   const [hasAnalyzed, setHasAnalyzed] = useState(false);
 
   return (
@@ -16,11 +18,10 @@ export function IssueCompassApp({ analysis }: IssueCompassAppProps) {
       <section className="hero">
         <div className="hero-card">
           <p className="eyebrow">IssueCompass × Coral SQL</p>
-          <h1>AI first mate for open-source maintainers</h1>
+          <h1>Decide what to work on today</h1>
           <p className="lede">
-            IssueCompass answers the maintainer question: “what should I work on today?” It joins GitHub
-            issues and PRs, community messages, and docs metadata through Coral-style SQL, then turns the
-            cross-source signal into a ranked action plan.
+            Join GitHub issues, community messages, and project docs through
+            Coral SQL to get a clear maintainer action plan.
           </p>
 
           <form
@@ -36,7 +37,9 @@ export function IssueCompassApp({ analysis }: IssueCompassAppProps) {
               onChange={(event) => setQuestion(event.target.value)}
             />
             <div className="ask-actions">
-              <span className="secondary-note">Demo repo: {analysis.repo.owner}/{analysis.repo.name}</span>
+              <span className="secondary-note">
+                Demo repo: {analysis.repo.owner}/{analysis.repo.name}
+              </span>
               <button className="primary-button" type="submit">
                 Analyze Repo →
               </button>
@@ -52,32 +55,12 @@ export function IssueCompassApp({ analysis }: IssueCompassAppProps) {
                 <li className="source-item" key={source.name}>
                   <strong>{source.name}</strong>
                   <span>{source.connector}</span>
-                  <span className="status-pill">{source.records} records · {source.status}</span>
+                  <span className="status-pill">
+                    {source.records} records · {source.status}
+                  </span>
                 </li>
               ))}
             </ul>
-          </section>
-
-          <section className="panel">
-            <h2>Coral features shown</h2>
-            <div className="metric-grid">
-              <div className="metric">
-                <strong>SQL</strong>
-                <span>One query layer over every source</span>
-              </div>
-              <div className="metric">
-                <strong>JOINs</strong>
-                <span>Issues ↔ messages ↔ docs</span>
-              </div>
-              <div className="metric">
-                <strong>Schema</strong>
-                <span>Learned join keys and columns</span>
-              </div>
-              <div className="metric">
-                <strong>Cache</strong>
-                <span>{analysis.cache.status} · TTL {analysis.cache.ttl}</span>
-              </div>
-            </div>
           </section>
         </aside>
       </section>
@@ -85,8 +68,9 @@ export function IssueCompassApp({ analysis }: IssueCompassAppProps) {
       {hasAnalyzed ? <Results analysis={analysis} /> : <EmptyState />}
 
       <p className="footer-note">
-        Built for the WeMakeDevs × Coral hackathon. The adapter in <code>lib/coral.ts</code> is ready to swap
-        fixture reads for live Coral connectors.
+        Built for the WeMakeDevs × Coral hackathon. The adapter in{" "}
+        <code>lib/coral.ts</code> is ready to swap fixture reads for live Coral
+        connectors.
       </p>
     </main>
   );
@@ -95,12 +79,8 @@ export function IssueCompassApp({ analysis }: IssueCompassAppProps) {
 function EmptyState() {
   return (
     <section className="panel empty-state">
-      <p className="eyebrow">Ready for demo</p>
-      <h2>Click “Analyze Repo” to reveal the Coral-powered maintainer brief.</h2>
-      <p>
-        The click simulates the core workflow: Coral reads connected schemas, joins sources with SQL, returns
-        cached results, and IssueCompass turns them into recommended maintainer actions.
-      </p>
+      <strong>Ready.</strong>
+      <span>Click “Analyze Repo” to generate today’s maintainer brief.</span>
     </section>
   );
 }
@@ -146,17 +126,23 @@ function Results({ analysis }: IssueCompassAppProps) {
 
         <details className="query-card" open>
           <summary>SQL used by Coral: priority_issues.sql</summary>
-          <pre><code>{analysis.sql.priorityIssues}</code></pre>
+          <pre>
+            <code>{analysis.sql.priorityIssues}</code>
+          </pre>
         </details>
 
         <details className="query-card">
           <summary>Additional Coral SQL: duplicate_issues.sql</summary>
-          <pre><code>{analysis.sql.duplicateIssues}</code></pre>
+          <pre>
+            <code>{analysis.sql.duplicateIssues}</code>
+          </pre>
         </details>
 
         <details className="query-card">
           <summary>Additional Coral SQL: release_notes.sql</summary>
-          <pre><code>{analysis.sql.releaseNotes}</code></pre>
+          <pre>
+            <code>{analysis.sql.releaseNotes}</code>
+          </pre>
         </details>
       </div>
     </section>
@@ -172,22 +158,33 @@ function IssueCard({ ranked, rank }: { ranked: RankedIssue; rank: number }) {
         <header className="issue-header">
           <div className="issue-title-row">
             <div>
-              <span className="issue-number">#{rank} · {issue.type === "pull_request" ? "PR" : "Issue"} {issue.number}</span>
+              <span className="issue-number">
+                #{rank} · {issue.type === "pull_request" ? "PR" : "Issue"}{" "}
+                {issue.number}
+              </span>
               <h2 className="issue-title">{issue.title}</h2>
             </div>
-            <span className={`priority-pill priority-${ranked.priority.toLowerCase()}`}>
+            <span
+              className={`priority-pill priority-${ranked.priority.toLowerCase()}`}
+            >
               {ranked.priority} · {ranked.score}
             </span>
           </div>
           <div className="issue-meta">
             <span>{issue.comments} comments</span>
-            <span>{issue.assignee ? `Assigned to ${issue.assignee}` : "Unassigned"}</span>
+            <span>
+              {issue.assignee ? `Assigned to ${issue.assignee}` : "Unassigned"}
+            </span>
             <span>Updated {formatDate(issue.updatedAt)}</span>
-            <a href={issue.url} target="_blank" rel="noreferrer">Open source item ↗</a>
+            <a href={issue.url} target="_blank" rel="noreferrer">
+              Open source item ↗
+            </a>
           </div>
           <div className="label-row">
             {issue.labels.map((label) => (
-              <span className="label-pill" key={label}>{label}</span>
+              <span className="label-pill" key={label}>
+                {label}
+              </span>
             ))}
           </div>
         </header>
@@ -208,7 +205,9 @@ function IssueCard({ ranked, rank }: { ranked: RankedIssue; rank: number }) {
               {ranked.matchedMessages.length > 0 ? (
                 ranked.matchedMessages.map((message) => (
                   <p className="mention" key={message.id}>
-                    <strong>{message.source} · {message.author} · {message.sentiment}</strong>
+                    <strong>
+                      {message.source} · {message.author} · {message.sentiment}
+                    </strong>
                     <span>{message.text}</span>
                   </p>
                 ))
@@ -222,7 +221,9 @@ function IssueCard({ ranked, rank }: { ranked: RankedIssue; rank: number }) {
               {ranked.matchedDocs.length > 0 ? (
                 ranked.matchedDocs.map((doc) => (
                   <p className="doc-link" key={doc.id}>
-                    <strong>{doc.title} · {doc.stale ? "stale" : "current"}</strong>
+                    <strong>
+                      {doc.title} · {doc.stale ? "stale" : "current"}
+                    </strong>
                     <span>{doc.path}</span>
                     <span>{doc.summary}</span>
                   </p>
@@ -252,6 +253,6 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat("en", {
     month: "short",
     day: "numeric",
-    year: "numeric"
+    year: "numeric",
   }).format(new Date(value));
 }
